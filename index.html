@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Acquisition Deal Screen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234e5b2c'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an operator's worksheet. Buy box strip on top, screening form left, live verdict + SBA math pinned right, pipeline ledger below. */
+:root {
+  --bg: #f3f4ef;
+  --surface: #ffffff;
+  --sunk: #e8eae1;
+  --ink: #1d2118;
+  --muted: #5e6455;
+  --line: #d3d6c8;
+  --accent: #4e5b2c;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2e7d0;
+  --go: #2f7a46;
+  --go-soft: #dcefe1;
+  --warn: #9a6a0e;
+  --warn-soft: #f6ead0;
+  --bad: #a83a2c;
+  --bad-soft: #f6dcd7;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15170f; --surface: #1d2016; --sunk: #24281c; --ink: #e9ecdf; --muted: #a1a792; --line: #343a2a;
+  --accent: #b2c37a; --accent-ink: #15170f; --accent-soft: #2e3520;
+  --go: #6fc28a; --go-soft: #1d3324; --warn: #e2b252; --warn-soft: #3a2f16; --bad: #ec8a7c; --bad-soft: #3c1f1a;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #15170f; --surface: #1d2016; --sunk: #24281c; --ink: #e9ecdf; --muted: #a1a792; --line: #343a2a;
+  --accent: #b2c37a; --accent-ink: #15170f; --accent-soft: #2e3520;
+  --go: #6fc28a; --go-soft: #1d3324; --warn: #e2b252; --warn-soft: #3a2f16; --bad: #ec8a7c; --bad-soft: #3c1f1a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+.auth-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.auth-form input { width: auto; flex: 1 1 200px; }
+.header-side { display: grid; gap: 8px; justify-items: end; }
+@media (max-width: 700px) { .header-side { justify-items: start; } }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1; }
+h2 { font-size: 22px; line-height: 1.1; }
+h3 { font-size: 17px; letter-spacing: .04em; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 24px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+.status { font-size: 13px; color: var(--muted); }
+.status.err { color: var(--bad); }
+
+/* Buy box */
+.buybox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.buybox summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.buybox summary::-webkit-details-marker { display: none; }
+.buybox summary h2::before { content: "▸ "; color: var(--accent); }
+.buybox[open] summary h2::before { content: "▾ "; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: 12px; background: var(--sunk); border-radius: 3px; padding: 3px 8px; white-space: nowrap; }
+.chip.no { background: var(--bad-soft); color: var(--bad); }
+.bb-body { padding: 4px 18px 18px; display: grid; gap: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 16px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.field small { font-size: 12px; color: var(--muted); }
+input[type=text], input[type=number], select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 100%; min-width: 0; }
+input[type=number] { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+textarea { min-height: 70px; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible, .seg label:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Main worksheet */
+.work { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .work { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: grid; gap: 18px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ko { display: flex; gap: 10px; align-items: flex-start; background: var(--sunk); padding: 10px 12px; border-radius: 4px; font-size: 14px; }
+.ko input { margin-top: 4px; accent-color: var(--bad); }
+
+.crit { display: grid; gap: 4px; }
+.crit-list { display: grid; gap: 14px; }
+.crit-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.crit-top strong { font-weight: 600; }
+.crit-top .w { font-family: var(--f-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.anchors { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); }
+.anchors span:last-child { text-align: right; }
+.seg { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg label { position: relative; text-align: center; padding: 7px 0; cursor: pointer; font-family: var(--f-mono); font-size: 14px; border-left: 1px solid var(--line); background: var(--bg); }
+.seg label:first-child { border-left: 0; }
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 500; }
+
+/* Verdict */
+.verdict { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 16px; }
+.score-box { display: grid; gap: 10px; padding: 18px 20px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); }
+.score-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.score-big { font-family: var(--f-display); font-size: 64px; line-height: .9; font-weight: 700; }
+.score-big small { font-size: 22px; color: var(--muted); }
+.pill { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: 16px; padding: 4px 12px; border-radius: 3px; }
+.pill.go { background: var(--go-soft); color: var(--go); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.bar { height: 8px; background: var(--sunk); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s ease; }
+.flags { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; }
+.flags li { padding-left: 18px; position: relative; }
+.flags li::before { content: "■"; position: absolute; left: 0; font-size: 10px; top: 3px; }
+.flags li.bad::before { color: var(--bad); }
+.flags li.warn::before { color: var(--warn); }
+.flags li.go::before { color: var(--go); }
+.math { display: grid; gap: 0; }
+.math dl { margin: 0; display: grid; grid-template-columns: 1fr auto; }
+.math dt, .math dd { padding: 7px 0; border-bottom: 1px dashed var(--line); margin: 0; font-size: 14px; }
+.math dt { color: var(--muted); }
+.math dd { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.math dt.key, .math dd.key { color: var(--ink); font-weight: 600; border-bottom: 1px solid var(--ink); }
+.math .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button { font: inherit; font-weight: 600; cursor: pointer; border-radius: 4px; padding: 9px 16px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
+button.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+button.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Pipeline */
+.ledger-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+th { font-family: var(--f-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--ink); white-space: nowrap; font-weight: 500; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.r, th.r { text-align: right; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--sunk); }
+tbody tr.active { background: var(--accent-soft); }
+.tag-ex { font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); color: var(--muted); padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+.stage { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 3px; background: var(--sunk); white-space: nowrap; }
+.stage.dead { color: var(--bad); background: var(--bad-soft); }
+.stage.loi { color: var(--go); background: var(--go-soft); }
+.empty { padding: 28px 18px; color: var(--muted); text-align: center; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filters select { width: auto; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Self-funded search · SBA 7(a)</div>
+      <h1>Acquisition Deal Screen</h1>
+      <p>Run every listing through the same buy box, scorecard and debt math. Kill bad deals in ten minutes so your nights go to the good ones.</p>
+    </div>
+    <div class="header-side">
+      <div class="status" id="status" role="status">Loading your pipeline…</div>
+      <div id="auth" hidden></div>
+    </div>
+  </header>
+
+  <details class="buybox" id="buybox">
+    <summary>
+      <h2>Buy box</h2>
+      <div class="chips" id="bbChips"></div>
+    </summary>
+    <div class="bb-body">
+      <div class="grid">
+        <div class="field"><label for="bbPriceMin">Price floor ($)</label><input type="number" id="bbPriceMin" step="50000"></div>
+        <div class="field"><label for="bbPriceMax">Price ceiling ($)</label><input type="number" id="bbPriceMax" step="50000"></div>
+        <div class="field"><label for="bbSdeMin">Minimum SDE ($)</label><input type="number" id="bbSdeMin" step="25000"></div>
+        <div class="field"><label for="bbMultMax">Max multiple (× SDE)</label><input type="number" id="bbMultMax" step="0.1"></div>
+        <div class="field"><label for="bbDscrMin">Minimum DSCR</label><input type="number" id="bbDscrMin" step="0.05"><small>Lenders floor at ~1.25</small></div>
+        <div class="field"><label for="bbCash">Cash I can inject ($)</label><input type="number" id="bbCash" step="5000"></div>
+        <div class="field"><label for="bbSalary">My salary from the business ($)</label><input type="number" id="bbSalary" step="5000"><small>Subtracted from SDE before DSCR</small></div>
+        <div class="field"><label for="bbRate">SBA rate (%)</label><input type="number" id="bbRate" step="0.25"></div>
+        <div class="field"><label for="bbTerm">Loan term (years)</label><input type="number" id="bbTerm" step="1"></div>
+        <div class="field"><label for="bbClose">Closing + working capital (% of price)</label><input type="number" id="bbClose" step="0.5"></div>
+      </div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
+        <div class="field"><label for="bbGeo">Geography</label><input type="text" id="bbGeo"></div>
+        <div class="field"><label for="bbWant">Target industries</label><input type="text" id="bbWant"></div>
+        <div class="field"><label for="bbNo">Off the table</label><input type="text" id="bbNo"></div>
+      </div>
+      <div class="actions"><button type="button" id="bbSave">Save buy box</button><span class="status" id="bbMsg"></span></div>
+    </div>
+  </details>
+
+  <section class="work">
+    <form class="panel" id="dealForm" autocomplete="off">
+      <div class="panel-head">
+        <h2 id="formTitle">Screen a listing</h2>
+        <span class="eyebrow">From the teaser or CIM</span>
+      </div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+        <div class="field"><label for="dName">Business / listing name</label><input type="text" id="dName" required placeholder="e.g. Treasure Valley janitorial co."></div>
+        <div class="field"><label for="dIndustry">Industry</label><input type="text" id="dIndustry" placeholder="Commercial cleaning"></div>
+        <div class="field"><label for="dLoc">Location</label><input type="text" id="dLoc" placeholder="Meridian, ID"></div>
+        <div class="field"><label for="dSource">Source / broker</label><input type="text" id="dSource" placeholder="BizBuySell, Murphy…"></div>
+        <div class="field"><label for="dUrl">Listing link</label><input type="text" id="dUrl" placeholder="https://…"><a id="dUrlOpen" href="#" target="_blank" rel="noopener" hidden style="font-size:12px;color:var(--accent)">Open listing ↗</a></div>
+      </div>
+      <div class="grid">
+        <div class="field"><label for="dPrice">Asking price ($)</label><input type="number" id="dPrice" step="10000" min="0"></div>
+        <div class="field"><label for="dSde">SDE ($)</label><input type="number" id="dSde" step="5000" min="0"><small>Seller's discretionary earnings</small></div>
+        <div class="field"><label for="dRev">Revenue ($)</label><input type="number" id="dRev" step="10000" min="0"></div>
+        <div class="field"><label for="dYears">Years in business</label><input type="number" id="dYears" step="1" min="0"></div>
+        <div class="field"><label for="dNote">Seller standby note ($)</label><input type="number" id="dNote" step="5000" min="0"><small>Counts up to half the injection</small></div>
+        <div class="field"><label for="dStage">Stage</label>
+          <select id="dStage">
+            <option>Screening</option><option>CIM requested</option><option>Owner call</option><option>Lender review</option><option>LOI</option><option>Dead</option>
+          </select></div>
+      </div>
+      <label class="ko"><input type="checkbox" id="dTrades"><span><strong>Construction or trades business.</strong> Automatic kill, per your buy box.</span></label>
+
+      <div class="panel-head"><h3>Scorecard</h3><span class="eyebrow">1 = weak · 5 = strong</span></div>
+      <div class="crit-list" id="critList"></div>
+
+      <div class="field"><label for="dNotes">Notes, red flags, questions for the owner</label><textarea id="dNotes"></textarea></div>
+      <div class="actions">
+        <button type="submit" id="saveBtn">Save to pipeline</button>
+        <button type="button" class="ghost" id="newBtn">Clear form</button>
+        <button type="button" class="danger" id="delBtn" hidden>Delete</button>
+        <span class="status" id="formMsg"></span>
+      </div>
+    </form>
+
+    <aside class="verdict" aria-live="polite">
+      <div class="score-box">
+        <div class="score-row">
+          <div class="score-big num" id="vScore">0<small>/100</small></div>
+          <span class="pill warn" id="vPill">Incomplete</span>
+        </div>
+        <div class="bar"><i id="vBar"></i></div>
+        <ul class="flags" id="vFlags"></ul>
+      </div>
+      <div class="score-box math">
+        <h3>SBA deal math</h3>
+        <dl>
+          <dt>Multiple</dt><dd id="mMult">–</dd>
+          <dt>Total project cost</dt><dd id="mProj">–</dd>
+          <dt>10% equity injection</dt><dd id="mInj">–</dd>
+          <dt>Seller standby credit</dt><dd id="mNote">–</dd>
+          <dt class="key">Cash you bring</dt><dd class="key" id="mCash">–</dd>
+          <dt>SBA loan</dt><dd id="mLoan">–</dd>
+          <dt>Annual debt service</dt><dd id="mAds">–</dd>
+          <dt class="key">DSCR after your salary</dt><dd class="key" id="mDscr">–</dd>
+          <dt>Cash flow after debt + salary</dt><dd id="mFree">–</dd>
+        </dl>
+        <p class="note">Estimates under the 10% injection rule for change-of-ownership loans. Lenders set their own terms on top; confirm with an SBA lender before an LOI.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section style="display:grid; gap:12px;">
+    <div class="panel-head">
+      <h2>Pipeline</h2>
+      <div class="filters">
+        <label for="fStage" class="eyebrow">Show</label>
+        <select id="fStage"><option value="live">Active deals</option><option value="all">All, including dead</option></select>
+      </div>
+    </div>
+    <div class="ledger-wrap">
+      <table>
+        <thead><tr><th>Business</th><th>Industry</th><th class="r">Price</th><th class="r">SDE</th><th class="r">Multiple</th><th class="r">DSCR</th><th class="r">Cash in</th><th class="r">Score</th><th>Verdict</th><th>Stage</th></tr></thead>
+        <tbody id="ledger"><tr><td colspan="10" class="empty">Loading your pipeline… Screened deals appear here, ranked by score. Fill in a listing above and press Save to add the first one.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  const CRITERIA = [
+    { id: "recurring", name: "Recurring revenue", w: 20, lo: "One-off jobs, constant selling", hi: "Contracts or subscriptions renew on their own" },
+    { id: "owner", name: "Owner independence", w: 20, lo: "Owner is the business", hi: "Manager and team run daily ops" },
+    { id: "concentration", name: "Customer diversification", w: 15, lo: "One client is >25% of revenue", hi: "No client above ~10%" },
+    { id: "financials", name: "Financial quality and trend", w: 15, lo: "Declining or messy books", hi: "3 years of clean, growing tax returns" },
+    { id: "fit", name: "Fit with my strengths", w: 10, lo: "Needs skills I don't have", hi: "Wins on ops discipline and leadership" },
+    { id: "growth", name: "Growth levers", w: 10, lo: "Saturated, no obvious upside", hi: "Clear, cheap levers (sales, pricing, systems)" },
+    { id: "seller", name: "Seller flexibility", w: 10, lo: "Cash-only, wants out in 30 days", hi: "Will carry a note and stay to transition" }
+  ];
+  const DEFAULT_BB = { priceMin: 750000, priceMax: 2500000, sdeMin: 250000, multMax: 3.5, dscrMin: 1.5, cash: 120000, salary: 100000, rate: 10.5, term: 10, close: 6,
+    geo: "Treasure Valley, or run remotely from Boise", want: "B2B services, recurring revenue, logistics, staffing, training", no: "Construction and trades" };
+  const $ = (id) => document.getElementById(id);
+  const money = (n) => (isFinite(n) ? (n < 0 ? "−$" : "$") + Math.round(Math.abs(n)).toLocaleString("en-US") : "–");
+  const short = (n) => !isFinite(n) || n === 0 ? "–" : (Math.abs(n) >= 1e6 ? "$" + (n / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M" : "$" + Math.round(n / 1000) + "K");
+  const numOr = (v, d) => { const n = parseFloat(v); return isFinite(n) ? n : d; };
+
+  let bb = { ...DEFAULT_BB };
+  let deals = [];
+  let editingId = null;
+  let db = null;
+
+  // ---------- scorecard UI ----------
+  const critList = $("critList");
+  CRITERIA.forEach((c) => {
+    const wrap = document.createElement("div");
+    wrap.className = "crit";
+    wrap.innerHTML = `<div class="crit-top"><strong>${c.name}</strong><span class="w">weight ${c.w}</span></div>
+      <div class="seg" role="radiogroup" aria-label="${c.name}">${[1,2,3,4,5].map((v) => `<label><input type="radio" name="c_${c.id}" id="c_${c.id}_${v}" value="${v}"${v === 3 ? " checked" : ""}>${v}</label>`).join("")}</div>
+      <div class="anchors"><span>${c.lo}</span><span>${c.hi}</span></div>`;
+    critList.appendChild(wrap);
+  });
+
+  // ---------- math ----------
+  function analyze(d, b) {
+    const price = numOr(d.price, 0), sde = numOr(d.sde, 0), note = numOr(d.sellerNote, 0);
+    const proj = price * (1 + b.close / 100);
+    const inj = proj * 0.10;
+    const noteCredit = Math.min(note, inj / 2);
+    const cash = inj - noteCredit;
+    const loan = proj - inj;
+    const r = b.rate / 100 / 12, n = b.term * 12;
+    const ads = loan > 0 ? (r > 0 ? loan * r / (1 - Math.pow(1 + r, -n)) : loan / n) * 12 : 0;
+    const avail = sde - b.salary;
+    const dscr = ads > 0 ? avail / ads : NaN;
+    const mult = sde > 0 ? price / sde : NaN;
+    const scores = d.scores || {};
+    let pts = 0;
+    CRITERIA.forEach((c) => { pts += (numOr(scores[c.id], 3) / 5) * c.w; });
+    const score = Math.round(pts);
+    const flags = [];
+    let kill = false;
+    if (d.trades) { kill = true; flags.push(["bad", "Construction or trades business: off the table."]); }
+    if (price > 0 && sde > 0) {
+      if (sde < b.sdeMin) { kill = true; flags.push(["bad", `SDE ${short(sde)} is under your ${short(b.sdeMin)} floor.`]); }
+      if (price > b.priceMax) flags.push(["warn", `Asking ${short(price)} is above your ${short(b.priceMax)} ceiling.`]);
+      if (price < b.priceMin) flags.push(["warn", `Asking ${short(price)} is below your ${short(b.priceMin)} floor; check it can pay you.`]);
+      if (mult > b.multMax) flags.push(["warn", `${mult.toFixed(2)}× SDE is rich vs your ${b.multMax}× max. Negotiate or walk.`]);
+      if (dscr < 1.25) { kill = true; flags.push(["bad", `DSCR ${dscr.toFixed(2)} won't pass a lender (needs ~1.25+).`]); }
+      else if (dscr < b.dscrMin) flags.push(["warn", `DSCR ${dscr.toFixed(2)} is thin vs your ${b.dscrMin} target.`]);
+      else flags.push(["go", `DSCR ${dscr.toFixed(2)} clears your ${b.dscrMin} target.`]);
+      if (cash > b.cash) flags.push(["warn", `Needs ${short(cash)} cash; you have ${short(b.cash)}. Ask for a bigger standby note.`]);
+      else flags.push(["go", `Cash in ${short(cash)} fits your ${short(b.cash)}.`]);
+      if (numOr(d.years, 0) > 0 && numOr(d.years, 0) < 5) flags.push(["warn", `Only ${d.years} years old; lenders prefer 5+ years of history.`]);
+      if (numOr(scores.owner, 3) <= 2) flags.push(["warn", "Owner-dependent: plan a long transition and an earnout."]);
+      if (numOr(scores.concentration, 3) <= 2) flags.push(["warn", "Customer concentration: get key-customer calls before LOI."]);
+    }
+    const complete = price > 0 && sde > 0;
+    let verdict, tone;
+    if (!complete && !d.trades) { verdict = "Incomplete"; tone = "warn"; }
+    else if (kill) { verdict = "Kill"; tone = "bad"; }
+    else if (score >= 70 && dscr >= b.dscrMin && cash <= b.cash) { verdict = "Pursue"; tone = "go"; }
+    else if (score >= 55) { verdict = "Dig deeper"; tone = "warn"; }
+    else { verdict = "Pass"; tone = "bad"; }
+    return { price, sde, proj, inj, noteCredit, cash, loan, ads, dscr, mult, score, flags, verdict, tone, free: avail - ads, complete };
+  }
+
+  // ---------- form state ----------
+  function readForm() {
+    const scores = {};
+    CRITERIA.forEach((c) => { const el = document.querySelector(`input[name="c_${c.id}"]:checked`); scores[c.id] = el ? +el.value : 3; });
+    return {
+      name: $("dName").value.trim(), industry: $("dIndustry").value.trim(), location: $("dLoc").value.trim(), source: $("dSource").value.trim(),
+      price: numOr($("dPrice").value, 0), sde: numOr($("dSde").value, 0), revenue: numOr($("dRev").value, 0), years: numOr($("dYears").value, 0),
+      sellerNote: numOr($("dNote").value, 0), stage: $("dStage").value, trades: $("dTrades").checked, notes: $("dNotes").value.trim(), scores,
+      listingUrl: $("dUrl").value.trim()
+    };
+  }
+  function fillForm(d) {
+    $("dName").value = d.name || ""; $("dIndustry").value = d.industry || ""; $("dLoc").value = d.location || ""; $("dSource").value = d.source || "";
+    $("dPrice").value = d.price || ""; $("dSde").value = d.sde || ""; $("dRev").value = d.revenue || ""; $("dYears").value = d.years || "";
+    $("dNote").value = d.sellerNote || ""; $("dStage").value = d.stage || "Screening"; $("dTrades").checked = !!d.trades; $("dNotes").value = d.notes || "";
+    CRITERIA.forEach((c) => { const v = (d.scores && d.scores[c.id]) || 3; const el = $(`c_${c.id}_${v}`); if (el) el.checked = true; });
+    $("dUrl").value = d.listingUrl || ""; syncUrl();
+    renderVerdict();
+  }
+  function syncUrl() {
+    const u = $("dUrl").value.trim(), a = $("dUrlOpen");
+    if (/^https?:\/\//i.test(u)) { a.href = u; a.hidden = false; } else { a.hidden = true; }
+  }
+  $("dUrl").addEventListener("input", syncUrl);
+  function renderVerdict() {
+    const a = analyze(readForm(), bb);
+    $("vScore").innerHTML = `${a.score}<small>/100</small>`;
+    $("vBar").style.width = a.score + "%";
+    const pill = $("vPill"); pill.textContent = a.verdict; pill.className = "pill " + a.tone;
+    const fl = $("vFlags"); fl.innerHTML = "";
+    if (!a.complete && !readForm().trades) { const li = document.createElement("li"); li.className = "warn"; li.textContent = "Enter asking price and SDE to run the debt math."; fl.appendChild(li); }
+    a.flags.forEach(([t, msg]) => { const li = document.createElement("li"); li.className = t; li.textContent = msg; fl.appendChild(li); });
+    const ok = a.complete;
+    $("mMult").textContent = ok ? a.mult.toFixed(2) + "×" : "–";
+    $("mProj").textContent = ok ? money(a.proj) : "–";
+    $("mInj").textContent = ok ? money(a.inj) : "–";
+    $("mNote").textContent = ok ? (a.noteCredit ? "−" + money(a.noteCredit) : "$0") : "–";
+    $("mCash").textContent = ok ? money(a.cash) : "–";
+    $("mLoan").textContent = ok ? money(a.loan) : "–";
+    $("mAds").textContent = ok ? money(a.ads) : "–";
+    $("mDscr").textContent = ok ? a.dscr.toFixed(2) : "–";
+    $("mFree").textContent = ok ? money(a.free) : "–";
+  }
+  $("dealForm").addEventListener("input", renderVerdict);
+  $("dealForm").addEventListener("change", renderVerdict);
+
+  function resetForm() {
+    editingId = null; $("dealForm").reset(); syncUrl(); $("formTitle").textContent = "Screen a listing";
+    $("delBtn").hidden = true; $("saveBtn").textContent = "Save to pipeline"; $("formMsg").textContent = "";
+    renderVerdict(); renderLedger();
+  }
+  $("newBtn").addEventListener("click", resetForm);
+
+  // ---------- buy box ----------
+  const BB_FIELDS = { priceMin: "bbPriceMin", priceMax: "bbPriceMax", sdeMin: "bbSdeMin", multMax: "bbMultMax", dscrMin: "bbDscrMin", cash: "bbCash", salary: "bbSalary", rate: "bbRate", term: "bbTerm", close: "bbClose", geo: "bbGeo", want: "bbWant", no: "bbNo" };
+  function fillBB() { Object.entries(BB_FIELDS).forEach(([k, id]) => { $(id).value = bb[k] ?? ""; }); renderChips(); }
+  function readBB() {
+    const out = {};
+    Object.entries(BB_FIELDS).forEach(([k, id]) => { const v = $(id).value; out[k] = typeof DEFAULT_BB[k] === "number" ? numOr(v, DEFAULT_BB[k]) : v.trim(); });
+    return out;
+  }
+  function renderChips() {
+    const c = $("bbChips");
+    c.innerHTML = "";
+    const items = [
+      [`${short(bb.priceMin)}–${short(bb.priceMax)}`], [`SDE ≥ ${short(bb.sdeMin)}`], [`≤ ${bb.multMax}× SDE`], [`DSCR ≥ ${bb.dscrMin}`], [`${short(bb.cash)} cash`], [`No: ${bb.no || "–"}`, "no"]
+    ];
+    items.forEach(([t, cls]) => { const s = document.createElement("span"); s.className = "chip" + (cls ? " " + cls : ""); s.textContent = t; c.appendChild(s); });
+  }
+  document.querySelector(".bb-body").addEventListener("input", () => { bb = readBB(); renderChips(); renderVerdict(); renderLedger(); });
+  $("bbSave").addEventListener("click", async () => {
+    bb = readBB();
+    if (!store.canWrite()) { $("bbMsg").textContent = "Sign in first to save the buy box."; return; }
+    $("bbSave").disabled = true;
+    try { await store.saveBuybox({ ...bb, updatedAt: new Date().toISOString() }); $("bbMsg").textContent = "Saved"; }
+    catch (e) { $("bbMsg").textContent = "Couldn't save the buy box. Check your connection and try again."; }
+    finally { $("bbSave").disabled = false; }
+  });
+
+  // ---------- pipeline ----------
+  function renderLedger() {
+    const body = $("ledger");
+    const show = $("fStage").value;
+    const rows = deals.map((d) => ({ d, a: analyze(d, bb) }))
+      .filter(({ d }) => show === "all" || d.stage !== "Dead")
+      .sort((x, y) => (x.a.verdict === "Kill") - (y.a.verdict === "Kill") || y.a.score - x.a.score);
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="10" class="empty">${deals.length ? "No active deals. Switch the filter to see dead ones." : "No deals screened yet. Fill in a listing above and press Save to add the first one."}</td></tr>`;
+      return;
+    }
+    body.innerHTML = "";
+    rows.forEach(({ d, a }) => {
+      const tr = document.createElement("tr");
+      if (d.id === editingId) tr.className = "active";
+      tr.tabIndex = 0;
+      const stageCls = d.stage === "Dead" ? "dead" : d.stage === "LOI" ? "loi" : "";
+      tr.innerHTML = `<td><span class="n"></span>${d.example ? '<span class="tag-ex">Example</span>' : ""}${d.autoFound && !d.reviewed ? '<span class="tag-ex" style="color:var(--accent);border-color:var(--accent)">Weekly find</span>' : ""}</td><td class="ind"></td>
+        <td class="r num">${short(a.price)}</td><td class="r num">${short(a.sde)}</td>
+        <td class="r num">${a.complete ? a.mult.toFixed(2) + "×" : "–"}</td><td class="r num">${a.complete ? a.dscr.toFixed(2) : "–"}</td>
+        <td class="r num">${a.complete ? short(a.cash) : "–"}</td><td class="r num">${a.score}</td>
+        <td><span class="pill ${a.tone}" style="font-size:13px;padding:2px 8px">${a.verdict}</span></td>
+        <td><span class="stage ${stageCls}"></span></td>`;
+      tr.querySelector(".n").textContent = d.name || "Untitled";
+      tr.querySelector(".ind").textContent = d.industry || "–";
+      tr.querySelector(".stage").textContent = d.stage || "Screening";
+      const open = () => {
+        editingId = d.id; fillForm(d); $("formTitle").textContent = "Editing: " + (d.name || "listing");
+        $("delBtn").hidden = false; $("delBtn").textContent = "Delete"; $("delBtn").dataset.confirm = "";
+        $("saveBtn").textContent = "Save changes"; $("formMsg").textContent = "";
+        renderLedger(); $("dealForm").scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+      tr.addEventListener("click", open);
+      tr.addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
+      body.appendChild(tr);
+    });
+  }
+  $("fStage").addEventListener("change", renderLedger);
+
+  $("dealForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const d = readForm();
+    if (!d.name) { $("formMsg").textContent = "Give the listing a name first."; $("dName").focus(); return; }
+    if (!store.canWrite()) { $("formMsg").textContent = "Sign in first to save. The verdict above still works."; return; }
+    $("saveBtn").disabled = true; $("formMsg").textContent = "Saving…";
+    try {
+      const prev = deals.find((x) => x.id === editingId);
+      const body = { ...d, example: false, autoFound: !!(prev && prev.autoFound), foundOn: (prev && prev.foundOn) || "", reviewed: true, updatedAt: new Date().toISOString() };
+      const isNew = !editingId;
+      const id = editingId || ("m-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+      await store.saveDeal(id, body);
+      editingId = id;
+      if (isNew) { $("formMsg").textContent = "Added to pipeline"; $("delBtn").hidden = false; $("saveBtn").textContent = "Save changes"; $("formTitle").textContent = "Editing: " + d.name; }
+      else $("formMsg").textContent = "Saved";
+      await refresh();
+    } catch (err) { $("formMsg").textContent = "Couldn't save. Check your connection and try again."; }
+    finally { $("saveBtn").disabled = false; }
+  });
+
+  $("delBtn").addEventListener("click", async () => {
+    const btn = $("delBtn");
+    if (!editingId || !store.canWrite()) return;
+    if (!btn.dataset.confirm) { btn.dataset.confirm = "1"; btn.textContent = "Click again to delete"; return; }
+    btn.disabled = true;
+    try { await store.deleteDeal(editingId); resetForm(); $("formMsg").textContent = "Deleted"; await refresh(); }
+    catch (err) { $("formMsg").textContent = "Couldn't delete. Try again."; }
+    finally { btn.disabled = false; btn.dataset.confirm = ""; btn.textContent = "Delete"; }
+  });
+
+  // ---------- boot ----------
+  fillBB(); renderVerdict();
+
+  async function refresh() {
+    const st = $("status");
+    let feed = [];
+    let feedOk = true;
+    try {
+      const r = await fetch("data/deals.json", { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      feed = Array.isArray(j) ? j : (j.deals || []);
+    } catch (e) { feedOk = false; }
+    let saved = { deals: {}, buybox: null };
+    let savedOk = true;
+    try { saved = await store.load(); } catch (e) { savedOk = false; }
+    if (saved.buybox) { bb = { ...DEFAULT_BB, ...saved.buybox }; delete bb.updatedAt; fillBB(); }
+    deals = mergeDeals(feed, saved.deals);
+    renderVerdict(); renderLedger();
+    const n = deals.length, fresh = deals.filter((d) => d.autoFound && !d.reviewed).length;
+    let msg = `${n} deal${n === 1 ? "" : "s"} in pipeline` + (fresh ? ` · ${fresh} weekly find${fresh === 1 ? "" : "s"} to score` : "");
+    const problems = [];
+    if (!feedOk) problems.push("weekly finds file didn't load");
+    if (!savedOk) problems.push("your saved edits didn't load");
+    st.classList.toggle("err", problems.length > 0);
+    st.textContent = problems.length ? msg + " · " + problems.join(", ") : msg;
+  }
+
+  // Weekly finds come from data/deals.json in the repo. Your edits live in the database keyed by the same id,
+  // so an edited or deleted weekly find stays edited or deleted when next week's file adds more.
+  function mergeDeals(feed, edits) {
+    const out = new Map();
+    feed.forEach((d) => { if (d && d.id) out.set(d.id, { ...d }); });
+    Object.entries(edits || {}).forEach(([id, d]) => {
+      if (d && d.deleted) out.delete(id);
+      else out.set(id, { ...(out.get(id) || {}), ...d, id });
+    });
+    return [...out.values()];
+  }
+
+  // ---------- storage: Supabase when configured, this browser otherwise ----------
+  const CFG = window.SITE_CONFIG || {};
+  const sb = CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
+  let session = null;
+
+  const store = sb ? {
+    mode: "cloud",
+    canWrite: () => !!session,
+    async load() {
+      if (!session) return { deals: {}, buybox: null };
+      const [d, s] = await Promise.all([
+        sb.from("deals").select("id,data,deleted"),
+        sb.from("settings").select("id,data").eq("id", "buybox").maybeSingle()
+      ]);
+      if (d.error) throw d.error;
+      const map = {};
+      (d.data || []).forEach((row) => { map[row.id] = row.deleted ? { deleted: true } : row.data; });
+      return { deals: map, buybox: s.data ? s.data.data : null };
+    },
+    async saveDeal(id, body) {
+      const { error } = await sb.from("deals").upsert({ id, data: body, deleted: false, updated_at: new Date().toISOString() });
+      if (error) throw error;
+    },
+    async deleteDeal(id) {
+      const { error } = await sb.from("deals").upsert({ id, data: {}, deleted: true, updated_at: new Date().toISOString() });
+      if (error) throw error;
+    },
+    async saveBuybox(data) {
+      const { error } = await sb.from("settings").upsert({ id: "buybox", data });
+      if (error) throw error;
+    }
+  } : {
+    mode: "local",
+    canWrite: () => true,
+    _get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    _put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { throw new Error("Browser storage is blocked"); } },
+    async load() { return { deals: this._get("ds.deals", {}), buybox: this._get("ds.buybox", null) }; },
+    async saveDeal(id, body) { const m = this._get("ds.deals", {}); m[id] = body; this._put("ds.deals", m); },
+    async deleteDeal(id) { const m = this._get("ds.deals", {}); m[id] = { deleted: true }; this._put("ds.deals", m); },
+    async saveBuybox(data) { this._put("ds.buybox", data); }
+  };
+
+  // ---------- sign-in ----------
+  function renderAuth() {
+    const box = $("auth");
+    if (store.mode === "local") {
+      box.hidden = false;
+      box.innerHTML = '<span class="status err">Database not connected yet: edits save in this browser only.</span>';
+      return;
+    }
+    box.hidden = false;
+    if (session) {
+      box.innerHTML = '<span class="status"></span> <button type="button" class="ghost" id="signOut">Sign out</button>';
+      box.querySelector(".status").textContent = "Signed in as " + (session.user && session.user.email || "you");
+      $("signOut").addEventListener("click", async () => { await sb.auth.signOut(); });
+    } else {
+      box.innerHTML = '<form id="signIn" class="auth-form"><label for="authEmail" class="eyebrow">Sign in to edit</label><input type="email" id="authEmail" required placeholder="you@example.com"><button type="submit">Email me a link</button><span class="status" id="authMsg"></span></form>';
+      $("signIn").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = $("authEmail").value.trim();
+        $("authMsg").textContent = "Sending…";
+        const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false } });
+        $("authMsg").textContent = error ? "That didn't work. Check the address matches your account." : "Check your email for the sign-in link.";
+      });
+    }
+  }
+
+  (async () => {
+    if (sb) {
+      const { data } = await sb.auth.getSession();
+      session = data.session;
+      sb.auth.onAuthStateChange((_evt, s) => { session = s; renderAuth(); refresh(); });
+    }
+    renderAuth();
+    await refresh();
+  })();
+})();
+</script>
+</body>
+</html>
